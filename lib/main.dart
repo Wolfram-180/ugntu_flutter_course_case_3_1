@@ -6,12 +6,12 @@ void main() => runApp(const MyApp());
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of the application.
   @override
   Widget build(BuildContext context) {
+    const String appTitle = 'UGNTU case 3.1';
     return const MaterialApp(
-      title: 'Shared preferences demo',
-      home: MyHomePage(title: 'Shared preferences demo'),
+      title: appTitle,
+      home: MyHomePage(title: appTitle),
     );
   }
 }
@@ -26,28 +26,29 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  int _counter_in_sharedprefs = 0;
+  int _counter_in_file = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadCounter();
+    _loadSPCounter();
   }
 
   //Loading counter value on start
-  void _loadCounter() async {
+  void _loadSPCounter() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _counter = (prefs.getInt('counter') ?? 0);
+      _counter_in_sharedprefs = (prefs.getInt('counter') ?? 0);
     });
   }
 
   //Incrementing counter after click
-  void _incrementCounter() async {
+  void _incrementSPCounter() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _counter = (prefs.getInt('counter') ?? 0) + 1;
-      prefs.setInt('counter', _counter);
+      _counter_in_sharedprefs = (prefs.getInt('counter') ?? 0) + 1;
+      prefs.setInt('counter', _counter_in_sharedprefs);
     });
   }
 
@@ -62,20 +63,30 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'You have pushed the button this many times:',
+              'Counter in Shared Preferances:',
             ),
             Text(
-              '$_counter',
+              '$_counter_in_sharedprefs',
               style: Theme.of(context).textTheme.headline4,
+            ),
+            ElevatedButton(
+              onPressed: _incrementSPCounter,
+              child: Text('increase Counter in Shared Preferances'),
+            ),
+            const Text(
+              'Counter in File:',
+            ),
+            Text(
+              '$_counter_in_file',
+              style: Theme.of(context).textTheme.headline4,
+            ),
+            ElevatedButton(
+              onPressed: () {},
+              child: Text('increase Counter in File'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
