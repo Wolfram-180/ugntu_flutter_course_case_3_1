@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const MyApp());
@@ -9,17 +13,46 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const String appTitle = 'UGNTU case 3.1';
-    return const MaterialApp(
+    return MaterialApp(
       title: appTitle,
-      home: MyHomePage(title: appTitle),
+      home: MyHomePage(title: appTitle, storage: CounterStorage()),
     );
   }
 }
 
+class CounterStorage {
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/counter.txt');
+  }
+
+  Future<int> readCounter() async {
+    try {
+      final file = await _localFile;
+      final contents = await file.readAsString();
+      return int.parse(contents);
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<File> writeCounter(int counter) async {
+    final file = await _localFile;
+    return file.writeAsString('$counter');
+  }
+}
+
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.title, required this.storage})
+      : super(key: key);
 
   final String title;
+  final CounterStorage storage;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -32,10 +65,14 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _loadSPCounter();
+    widget.storage.readCounter().then((int value) {
+      setState(() {
+        _counter_in_file = value;
+        _loadSPCounter();
+      });
+    });
   }
 
-  //Loading counter value on start
   void _loadSPCounter() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -43,13 +80,19 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  //Incrementing counter after click
   void _incrementSPCounter() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _counter_in_sharedprefs = (prefs.getInt('counter') ?? 0) + 1;
       prefs.setInt('counter', _counter_in_sharedprefs);
     });
+  }
+
+  Future<File> _incrementFileCounter() {
+    setState(() {
+      _counter_in_file++;
+    });
+    return widget.storage.writeCounter(_counter_in_file);
   }
 
   @override
@@ -81,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
               style: Theme.of(context).textTheme.headline4,
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: _incrementFileCounter,
               child: Text('increase Counter in File'),
             ),
           ],
